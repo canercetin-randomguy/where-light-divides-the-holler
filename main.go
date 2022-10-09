@@ -9,6 +9,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/kindlyfire/go-keylogger"
@@ -77,24 +78,30 @@ func AudioPlayer(audio string) {
 }
 func main() {
 	var availableTracks []string
-	// tracks
-	availableTracks = append(availableTracks, "1665260018704_track.mp3")
-	availableTracks = append(availableTracks, "1665260697904_track.mp3")
-	availableTracks = append(availableTracks, "1665260698061_track.mp3")
-	availableTracks = append(availableTracks, "1665260698061_track.mp3")
-	availableTracks = append(availableTracks, "1665260698080_track.mp3")
-	availableTracks = append(availableTracks, "1665260698090_track.mp3")
-	availableTracks = append(availableTracks, "1665260873227_track.mp3")
-	availableTracks = append(availableTracks, "1665260873228_track (1).mp3")
-	availableTracks = append(availableTracks, "1665260873228_track (2).mp3")
-	availableTracks = append(availableTracks, "1665260873228_track.mp3")
-	availableTracks = append(availableTracks, "1665260698526_track.mp3")
-	availableTracks = append(availableTracks, "1665260938798_track.mp3")
-	availableTracks = append(availableTracks, "1665261191119_track.mp3")
-	availableTracks = append(availableTracks, "1665261190998_track.mp3")
+	// Scan the directory for mp3 files
+	dir, err := os.Open("./soundtracks")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer func(dir *os.File) {
+		err := dir.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}(dir)
+	files, err := dir.Readdir(-1)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, file := range files {
+		if strings.Contains(file.Name(), ".mp3") {
+			availableTracks = append(availableTracks, file.Name())
+		}
+	}
 	kl := keylogger.NewKeylogger()
 	var previousKey rune
 	emptyCount := 0
+	err = os.Chdir("./soundtracks")
 	for {
 		key := kl.GetKey()
 		if !key.Empty {
@@ -109,8 +116,12 @@ func main() {
 						fmt.Println("You can press P **TWICE** to pause/resume the audio.")
 						fmt.Println("You can press U **TWICE** to increase the volume.")
 						fmt.Println("You can press Y **TWICE** to lower the volume.")
-						// Pick a random track from the available tracks
-						AudioPlayer(availableTracks[rand.Intn(len(availableTracks))])
+						randomTrack := availableTracks[rand.Intn(len(availableTracks))]
+						fmt.Println("Now playing: ", randomTrack)
+						if err != nil {
+							panic(err)
+						}
+						AudioPlayer(randomTrack)
 
 					}
 				}
